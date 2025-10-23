@@ -5,6 +5,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../db');
 
+const auth = require('../middleware/auth');
+
 const userController = {
   async register(req, res) {
     const { email, password, name, role, wallet } = req.body;
@@ -54,12 +56,15 @@ const userController = {
       res.status(500).json({ error: 'Something went wrong' });
     }
   },
-  getProfile: (req, res) => res.send('Get user profile'),
+  getProfile(req, res) {
+    const { password, ...user } = req.user;
+    res.json(user);
+  },
 
 };
 
 router.post('/register', userController.register);
 router.post('/login', userController.login);
-router.get('/profile', userController.getProfile);
+router.get('/profile', auth, userController.getProfile);
 
 module.exports = router;
