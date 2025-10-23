@@ -61,8 +61,43 @@ const bidController = {
     }
   },
 
-  updateBid: (req, res) => res.send(`Update bid with ID ${req.params.id}`),
-  deleteBid: (req, res) => res.send(`Delete bid with ID ${req.params.id}`),
+  
+  async updateBid(req, res) {
+    const { id } = req.params;
+    const { amount } = req.body;
+    try {
+      const bid = await prisma.bid.findUnique({ where: { id } });
+
+      if (!bid || bid.applicantId !== req.user.id) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
+      const updatedBid = await prisma.bid.update({
+        where: { id },
+        data: { amount },
+      });
+      res.json(updatedBid);
+    } catch (error) {
+      res.status(400).json({ error: 'Invalid data' });
+    }
+  },
+
+  async deleteBid(req, res) {
+    const { id } = req.params;
+    try {
+      const bid = await prisma.bid.findUnique({ where: { id } });
+
+      if (!bid || bid.applicantId !== req.user.id) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
+      await prisma.bid.delete({ where: { id } });
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: 'Something went wrong' });
+    }
+  },
+
 };
 
 router.post('/', auth, bidController.createBid);
